@@ -19,6 +19,7 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
     }
 
     @IBAction func createMultipartApiPressed(_ sender: UIButton) {
+        uploadSuccessBtn.backgroundColor = UIColor.systemRed
         presentImageAndVideoPicker()
     }
     
@@ -77,17 +78,15 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
         do {
             try data.write(to: tempURL)
             let mimeType = getMimeType(for: tempURL)
-        
-            self.uploadManager.initiateUploadSequence(uniqueFileName, tempURL, mimeType) { result in
-                switch result {
-                case .success(_):
-                    DispatchQueue.main.async { [self] in
-                        uploadSuccessBtn.backgroundColor = UIColor.systemGreen
-                    }
-                case .failure(let error):
-                    print("Error: \(error.localizedDescription)")
-                    DispatchQueue.main.async { [self] in
-                        uploadSuccessBtn.backgroundColor = UIColor.systemRed
+
+            uploadManager.initiateUploadSequence(uniqueFileName, tempURL, mimeType) { [weak self] result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(_):
+                        self?.uploadSuccessBtn.backgroundColor = UIColor.systemGreen
+                    case .failure(let error):
+                        print("Error: \(error.localizedDescription)")
+                        self?.uploadSuccessBtn.backgroundColor = UIColor.systemRed
                     }
                 }
             }
@@ -95,6 +94,7 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
             print("Error saving media data: \(error)")
         }
     }
+
     
     func getMimeType(for url: URL) -> String {
         guard let utType = UTType(filenameExtension: url.pathExtension) else {
